@@ -238,6 +238,25 @@
     .tt-pad { position: sticky; bottom: 0; background: #fff; padding: 8px 0; z-index: 2; }
     #tt-next { width: 64px; height: 64px; }
   }
+  .asset-row { border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:10px; display:grid; gap:4px; }
+  .asset-row h3 { margin:0; font-size:1rem; }
+  .asset-row .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .badge-overdue { background:#fde8ec; color:#9f1239; }
+  .badge-due { background:#fff3d6; color:#8a5a00; }
+  .badge-upcoming { background:#e7f0fb; color:#1e3a8a; }
+  .badge-ok { background:#e8f6ee; color:#166534; }
+  .badge-demo { background:repeating-linear-gradient(45deg,#ffe08a,#ffe08a 8px,#fff3c4 8px,#fff3c4 16px); color:#5a3d00; border:1px solid #c99a00; }
+  .demo-banner { background:repeating-linear-gradient(45deg,#ffe08a,#ffe08a 12px,#fff3c4 12px,#fff3c4 24px); border:2px dashed #c99a00; color:#5a3d00; font-weight:800; padding:8px 12px; border-radius:8px; text-align:center; margin-bottom:10px; }
+  .live-banner { background:#e8f6ee; border:1px solid #9bd3b0; color:#166534; font-weight:700; padding:8px 12px; border-radius:8px; margin-bottom:10px; }
+  .m-gauges { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .m-gauge { text-align:center; background:#f5fbfb; border-radius:8px; padding:6px; }
+  .m-gauge canvas { width:100%; max-width:160px; height:auto; }
+  .m-lbl { font-size:.75rem; text-transform:uppercase; color:var(--teal); }
+  .m-val { font-size:1.3rem; font-weight:700; }
+  .m-demo .m-val::after { content:" (sim)"; font-size:.7rem; color:#8a5a00; }
+  .m-alerts { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; min-height:1.6em; }
+  #dash-assets .asset-row { margin-bottom:6px; }
+  @media (max-width: 600px) { .m-gauges { grid-template-columns:1fr 1fr 1fr; gap:4px; } .m-val { font-size:1rem; } }
 </style>
 </head>
 <body>
@@ -251,6 +270,8 @@
     <button type="button" data-view="customers">Customers</button>
     <button type="button" data-view="dispatch">Dispatch</button>
     <button type="button" data-view="estimates">Estimates</button>
+    <button type="button" data-view="assets">Assets</button>
+    <button type="button" data-view="monitor">Monitoring</button>
     <button type="button" data-view="eh">Environmental Health</button>
     <button type="button" data-view="game">Tank Tumble</button>
     <button type="button" data-view="settings">Settings</button>
@@ -498,6 +519,83 @@
           </div>
         </div>
       </form>
+    </div>
+  </section>
+
+  <section id="view-assets" class="view">
+    <div class="card">
+      <h2>Assets: tanks, grease traps, lift stations</h2>
+      <p class="eh-note"><strong>General guidelines only.</strong> Recommended service dates below are rules of thumb, not regulations. Many Georgia counties and cities run FOG (fats, oils and grease) programs with their own pumping and record-keeping requirements, so check the local ordinance and the permit for each site.</p>
+      <form id="asset-form">
+        <input type="hidden" name="id">
+        <div class="form-grid">
+          <div><label for="a-customer">Customer <span class="req">*</span></label><input id="a-customer" name="customer" list="customer-names" required maxlength="120" autocomplete="off"></div>
+          <div><label for="a-type">Type</label><select id="a-type" name="type"><option value="septic">Septic tank</option><option value="grease">Grease trap / interceptor</option><option value="lift">Lift station</option></select></div>
+          <div><label for="a-name">Asset name</label><input id="a-name" name="name" maxlength="80" placeholder="Kitchen interceptor, Station #2…"></div>
+          <div><label for="a-cap">Size / capacity (gallons)</label><input id="a-cap" name="capacity" type="number" min="0" step="1"></div>
+          <div><label for="a-loc">Location</label><input id="a-loc" name="location" maxlength="200" placeholder="Address or spot on the property"></div>
+          <div><label for="a-usage">Usage</label><select id="a-usage" name="usage"><option value="normal">Normal</option><option value="heavy">Heavy</option><option value="light">Light</option></select></div>
+          <div><label for="a-last">Last service date</label><input id="a-last" name="lastService" type="date"></div>
+          <div><label for="a-fog">Grease traps: last FOG + solids reading (% of depth)</label><input id="a-fog" name="fogPct" type="number" min="0" max="100" step="1"></div>
+          <div><label for="a-int">Custom interval in days (optional, overrides the rule)</label><input id="a-int" name="interval" type="number" min="1" step="1"></div>
+          <div class="full"><label for="a-notes">Notes</label><textarea id="a-notes" name="notes" rows="2" maxlength="1000"></textarea></div>
+          <div class="form-actions full"><button class="btn btn-primary" type="submit" id="a-submit">Save asset</button> <button class="btn" type="button" id="a-cancel" hidden>Cancel edit</button></div>
+        </div>
+      </form>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="toolbar"><h2>All assets</h2><select id="a-filter" aria-label="Filter by type"><option value="">All types</option><option value="septic">Septic tanks</option><option value="grease">Grease traps</option><option value="lift">Lift stations</option></select></div>
+      <div id="asset-list"></div>
+    </div>
+    <details class="card" style="margin-top:16px">
+      <summary><strong>How the next-service recommendation works</strong></summary>
+      <ul class="hint">
+        <li><strong>Grease traps / interceptors:</strong> the common "25% rule": pump when floating FOG plus settled solids reach 25% of the trap's depth. Typical intervals run 30 to 90 days: small under-sink traps (100 gal or less) start at 30 days, mid-size at 60, large in-ground interceptors (1,000 gal or more) at 90. Heavy use shortens the interval by 30 days and light use lengthens it by 30, kept within 30 to 90. A reading at 25% or more marks it overdue now, and 20% or more marks it due.</li>
+        <li><strong>Lift stations:</strong> inspect pumps (amp draw, run time, noise), test floats and the high-water alarm, check check valves and the control panel, and clean the wet well of grease and debris. Typical schedule is quarterly (90 days) for heavy or commercial use and semiannual (180 days) for light use.</li>
+        <li><strong>Septic tanks:</strong> a typical household tank is inspected and pumped every 3 to 5 years. This app uses 3 years, or 2 years for heavy use.</li>
+        <li>A custom interval always wins. Overdue = past the date; Due = within 14 days; Upcoming = within 45 days.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section id="view-monitor" class="view">
+    <div class="card">
+      <div class="toolbar"><h2>Live monitoring</h2>
+        <select id="m-asset" aria-label="Asset to monitor"></select>
+      </div>
+      <div id="m-banner"></div>
+      <div class="m-gauges">
+        <div class="m-gauge"><canvas id="g-ph" width="160" height="100"></canvas><div class="m-lbl">pH</div><div class="m-val" id="v-ph">--</div></div>
+        <div class="m-gauge"><canvas id="g-flow" width="160" height="100"></canvas><div class="m-lbl">Flow (gpm)</div><div class="m-val" id="v-flow">--</div></div>
+        <div class="m-gauge"><canvas id="g-level" width="160" height="100"></canvas><div class="m-lbl">Level (%)</div><div class="m-val" id="v-level">--</div></div>
+      </div>
+      <div id="m-alerts" class="m-alerts"></div>
+      <canvas id="m-chart" width="700" height="180" style="width:100%;height:auto;background:#fbfdfd;border:1px solid var(--line);border-radius:8px"></canvas>
+      <p class="hint" id="m-status"></p>
+    </div>
+    <div class="stack" style="margin-top:16px">
+      <form class="card" id="m-settings">
+        <h2>Connect a sensor</h2>
+        <div class="form-grid">
+          <div><label for="m-mode">Data source</label><select id="m-mode" name="mode"><option value="off">Off</option><option value="demo">Demo sensor (simulated data)</option><option value="url">Real sensor: poll a JSON URL</option></select></div>
+          <div><label for="m-every">Poll every (seconds)</label><input id="m-every" name="every" type="number" min="5" value="30"></div>
+          <div class="full"><label for="m-url">JSON URL</label><input id="m-url" name="url" type="url" maxlength="400" placeholder="https://api.thingspeak.com/channels/CHANNEL_ID/feeds/last.json?api_key=READ_KEY"></div>
+          <div><label>High level alert (%)</label><input name="levelHigh" type="number" min="0" max="100"></div>
+          <div><label>pH low / high</label><span style="display:flex;gap:6px"><input name="phLow" type="number" step="0.1" aria-label="pH low"><input name="phHigh" type="number" step="0.1" aria-label="pH high"></span></div>
+          <div><label>No-flow below (gpm)</label><input name="flowLow" type="number" step="0.1" min="0"></div>
+          <div><label>High flow above (gpm)</label><input name="flowHigh" type="number" step="0.1" min="0"></div>
+          <div class="form-actions full"><button class="btn btn-primary" type="submit">Save sensor settings</button></div>
+        </div>
+        <p class="hint">Settings are saved per asset in this browser. The URL must return JSON with <code>ph</code>, <code>flow_gpm</code>, <code>level_pct</code> and optional <code>timestamp</code>. A ThingSpeak "last entry" response also works, read as field1 = pH, field2 = flow (gpm), field3 = level (%). The service must allow browser requests (CORS); ThingSpeak's read API does.</p>
+      </form>
+      <details class="card">
+        <summary><strong>Free or low-cost ways to get a real sensor online</strong></summary>
+        <ul class="hint">
+          <li>An ESP32 microcontroller board with Wi-Fi can read an ultrasonic or pressure level sensor, a pH probe with an analog interface board, and a pulse-output flow meter.</li>
+          <li>The ESP32 posts readings to a free ThingSpeak channel (free tier, limited update rate). Paste the channel's read URL (feeds/last.json) above.</li>
+          <li>Use sensors rated for wastewater, keep electronics outside the tank, and follow confined-space safety rules. Never rely on a hobby sensor in place of a required alarm.</li>
+        </ul>
+      </details>
     </div>
   </section>
 
@@ -2597,6 +2695,176 @@ window.GA_EH_DATA=[
   document.querySelectorAll("nav button").forEach(function(b){b.addEventListener("click",function(){if(b.getAttribute("data-view")!=="game")pause(true);});});
   document.addEventListener("visibilitychange",function(){if(document.hidden)pause(true);});
   reset();draw();hud();
+})();
+</script>
+<script>
+(function () {
+  var KEY="septic-hero-assets-v1", MKEY="septic-hero-monitor-v1", DAY=86400000;
+  var TYPES={septic:"Septic tank",grease:"Grease trap / interceptor",lift:"Lift station"};
+  function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v&&typeof v==="object"?v:d;}catch(x){return d;}}
+  function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(x){}}
+  var assets=ld(KEY,[]); if(!Array.isArray(assets))assets=[];
+  var mon=ld(MKEY,{}); if(Array.isArray(mon))mon={};
+  function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
+  function parse(s){if(!s)return null;var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]);}
+  function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+  function fmt(d){return d?d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"—";}
+  function rec(a){
+    var cap=+a.capacity||0,days,why;
+    if(a.type==="grease"){
+      days=cap&&cap<=100?30:(cap>=1000?90:60);why=(cap?cap+" gal":"size unknown")+" → "+days+" day base";
+      if(a.usage==="heavy"){days=Math.max(30,days-30);why+=", heavy use → "+days;}
+      if(a.usage==="light"){days=Math.min(90,days+30);why+=", light use → "+days;}
+    } else if(a.type==="lift"){days=a.usage==="light"?180:90;why=(days===90?"quarterly":"semiannual")+" check: pumps, floats/alarm, wet well cleaning";}
+    else {days=a.usage==="heavy"?730:1095;why="typical "+(days/365)+"-year pump-out";}
+    if(+a.interval>0){days=+a.interval;why="custom interval "+days+" days";}
+    var last=parse(a.lastService),next=last?new Date(last.getTime()+days*DAY):today();
+    if(!last)why="no service on record, schedule a first service";
+    var fog=a.type==="grease"&&a.fogPct!==""&&a.fogPct!=null?+a.fogPct:null;
+    if(fog!=null&&fog>=25){next=today();why="FOG + solids at "+fog+"% (25% rule): pump now";}
+    else if(fog!=null&&fog>=20&&next>new Date(today().getTime()+14*DAY)){next=new Date(today().getTime()+7*DAY);why="FOG + solids at "+fog+"%, close to the 25% limit";}
+    var diff=Math.round((next-today())/DAY),st=diff<0||(fog!=null&&fog>=25)?"overdue":diff<=14?"due":diff<=45?"upcoming":"ok";
+    return {next:next,diff:diff,status:st,why:why};
+  }
+  var LBL={overdue:"Overdue",due:"Due",upcoming:"Upcoming",ok:"OK"};
+  function badge(s){return '<span class="badge badge-'+s+'">'+LBL[s]+'</span>';}
+  function row(a,dash){
+    var r=rec(a),h=(a.history||[]).slice().reverse();
+    return '<div class="asset-row"><h3>'+e(a.name||TYPES[a.type])+' '+badge(r.status)+'</h3>'+
+      '<div>'+e(a.customer)+' · '+TYPES[a.type]+(a.capacity?' · '+e(a.capacity)+' gal':'')+(a.location?' · '+e(a.location):'')+'</div>'+
+      '<div class="hint">Last service: '+fmt(parse(a.lastService))+' · Next: <strong>'+fmt(r.next)+'</strong> ('+(r.diff<0?(-r.diff)+' days overdue':r.diff+' days')+') · '+e(r.why)+'</div>'+
+      (dash?'':(a.notes?'<div class="hint">Notes: '+e(a.notes)+'</div>':'')+(h.length?'<details><summary class="hint">Service history ('+h.length+')</summary><ul class="hint">'+h.map(function(x){return '<li>'+fmt(parse(x.date))+(x.note?' – '+e(x.note):'')+'</li>';}).join("")+'</ul></details>':''))+
+      '<div class="actions"><button class="btn btn-small" type="button" data-asset="job" data-id="'+e(a.id)+'">Create dispatch job</button>'+
+      (dash?'':'<button class="btn btn-small" type="button" data-asset="serviced" data-id="'+e(a.id)+'">Log service today</button><button class="btn btn-small" type="button" data-asset="monitor" data-id="'+e(a.id)+'">Monitor</button><button class="btn btn-small" type="button" data-asset="edit" data-id="'+e(a.id)+'">Edit</button><button class="btn btn-danger btn-small" type="button" data-asset="del" data-id="'+e(a.id)+'">Delete</button>')+'</div></div>';
+  }
+  var dash=document.createElement("div");dash.className="card";dash.style.marginTop="16px";
+  dash.innerHTML='<h2>Asset service due</h2><p class="hint">Grease traps, lift stations and tanks that are overdue, due in 14 days or coming up in 45 days. General guidelines; check local ordinances.</p><div id="dash-assets"></div>';
+  document.getElementById("view-dashboard").appendChild(dash);
+  function render(){
+    var f=document.getElementById("a-filter").value;
+    var list=assets.filter(function(a){return !f||a.type===f;}).sort(function(a,b){return rec(a).next-rec(b).next;});
+    document.getElementById("asset-list").innerHTML=list.length?list.map(function(a){return row(a,false);}).join(""):'<p class="empty">No assets yet. Add a grease trap, lift station or tank above.</p>';
+    var due=assets.filter(function(a){return rec(a).status!=="ok";}).sort(function(a,b){return rec(a).next-rec(b).next;});
+    document.getElementById("dash-assets").innerHTML=due.length?due.map(function(a){return row(a,true);}).join(""):'<p class="empty">Nothing due in the next 45 days.</p>';
+    fillAssetSelect();
+  }
+  var form=document.getElementById("asset-form");
+  function resetForm(){form.reset();form.id.value="";document.getElementById("a-submit").textContent="Save asset";document.getElementById("a-cancel").hidden=true;}
+  form.addEventListener("submit",function(ev){
+    ev.preventDefault();
+    var a={id:form.id.value||("a"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),customer:form.customer.value.trim(),type:TYPES[form.type.value]?form.type.value:"septic",name:form.name.value.trim(),capacity:form.capacity.value,location:form.location.value.trim(),usage:form.usage.value,lastService:form.lastService.value,fogPct:form.fogPct.value,interval:form.interval.value,notes:form.notes.value.trim(),history:[]};
+    var old=assets.find(function(x){return x.id===a.id;});
+    if(old){a.history=old.history||[];if(a.lastService&&a.lastService!==old.lastService)a.history.push({date:a.lastService,note:"Service date updated"});Object.assign(old,a);}
+    else{if(a.lastService)a.history.push({date:a.lastService,note:"Initial record"});assets.push(a);}
+    sv(KEY,assets);resetForm();render();
+  });
+  document.getElementById("a-cancel").addEventListener("click",resetForm);
+  document.getElementById("a-filter").addEventListener("change",render);
+  function showTab(v){var b=document.querySelector('nav button[data-view="'+v+'"]');if(b)b.click();}
+  document.body.addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-asset]");if(!b)return;
+    var a=assets.find(function(x){return x.id===b.getAttribute("data-id");});if(!a)return;
+    var act=b.getAttribute("data-asset");
+    if(act==="job"){
+      var r=rec(a);showTab("dispatch");
+      var svc=a.type==="grease"?"Grease trap pump-out":a.type==="lift"?"Lift station service: pump inspection, float/alarm test, wet well cleaning":"Septic tank pump-out / inspection";
+      var set=function(id,v){var el=document.getElementById(id);if(el){el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));}};
+      set("j-customer",a.customer);set("j-address",a.location||"");set("j-service",svc+(a.name?" ("+a.name+")":""));
+      var d=r.next<today()?today():r.next;set("j-date",iso(d));
+      var tech=document.getElementById("j-tech");if(tech){tech.focus();}
+      var fl=document.getElementById("flash");if(fl)fl.textContent="Job form filled in from the asset. Add a technician and press save.";
+    } else if(act==="serviced"){
+      var t=iso(today());a.lastService=t;a.fogPct="";a.history=a.history||[];a.history.push({date:t,note:"Serviced"});sv(KEY,assets);render();
+    } else if(act==="edit"){
+      ["customer","type","name","capacity","location","usage","lastService","fogPct","interval","notes","id"].forEach(function(k){form[k].value=a[k]==null?"":a[k];});
+      document.getElementById("a-submit").textContent="Update asset";document.getElementById("a-cancel").hidden=false;form.scrollIntoView({behavior:"smooth"});
+    } else if(act==="del"){
+      if(!confirm("Delete this asset and its history?"))return;assets=assets.filter(function(x){return x!==a;});sv(KEY,assets);render();
+    } else if(act==="monitor"){document.getElementById("m-asset").value=a.id;selectAsset();showTab("monitor");}
+  });
+
+  // ---- Monitoring ----
+  var sel=document.getElementById("m-asset"),ms=document.getElementById("m-settings"),cur="",hist=[],timer=0,sim=null;
+  var DEF={mode:"off",every:30,url:"",levelHigh:80,phLow:6,phHigh:9,flowLow:0.2,flowHigh:50};
+  function cfg(){return Object.assign({},DEF,mon[cur]||{});}
+  function fillAssetSelect(){
+    var v=sel.value;
+    sel.innerHTML='<option value="general">General (no asset)</option>'+assets.map(function(a){return '<option value="'+e(a.id)+'">'+e((a.name||TYPES[a.type])+" – "+a.customer)+'</option>';}).join("");
+    sel.value=assets.some(function(a){return a.id===v;})?v:"general";
+  }
+  function selectAsset(){
+    cur=sel.value||"general";hist=[];sim=null;var c=cfg();
+    Object.keys(DEF).forEach(function(k){if(ms[k])ms[k].value=c[k];});
+    start();
+  }
+  function stop(){clearInterval(timer);timer=0;}
+  function start(){
+    stop();var c=cfg();draw(null);
+    if(c.mode==="demo"){tick();timer=setInterval(tick,2000);}
+    else if(c.mode==="url"&&c.url){tick();timer=setInterval(tick,Math.max(5,+c.every||30)*1000);}
+  }
+  function simulate(){
+    var a=assets.find(function(x){return x.id===cur;})||{type:"lift"};
+    if(!sim)sim={lvl:a.type==="lift"?35:50,ph:a.type==="grease"?6.4:7.2,t:0};
+    sim.t++;var flow;
+    if(a.type==="lift"){sim.lvl+=1.2+Math.random()*0.8;if(sim.lvl>70)sim.pump=true;if(sim.pump){sim.lvl-=6;if(sim.lvl<25)sim.pump=false;}flow=sim.pump?28+Math.random()*4:0.5+Math.random();}
+    else{sim.lvl=Math.min(95,Math.max(10,sim.lvl+(Math.random()-0.45)*0.6));flow=Math.max(0,3+Math.sin(sim.t/8)*2.5+(Math.random()-0.5));}
+    sim.ph=Math.min(10,Math.max(4.5,sim.ph+(Math.random()-0.5)*0.08));
+    return {ph:sim.ph,flow:flow,level:sim.lvl,ts:new Date(),demo:true};
+  }
+  function num(v){var n=parseFloat(v);return isFinite(n)?n:null;}
+  function tick(){
+    var c=cfg();
+    if(c.mode==="demo"){push(simulate());return;}
+    fetch(c.url,{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){
+      if(j&&j.feeds&&j.feeds.length)j=j.feeds[j.feeds.length-1];
+      var d={ph:num(j.ph!=null?j.ph:j.field1),flow:num(j.flow_gpm!=null?j.flow_gpm:j.field2),level:num(j.level_pct!=null?j.level_pct:j.field3),ts:new Date(j.timestamp||j.created_at||Date.now()),demo:false};
+      if(d.ph==null&&d.flow==null&&d.level==null)throw new Error("no ph, flow_gpm or level_pct fields found");
+      push(d);
+    }).catch(function(err){document.getElementById("m-status").textContent="Could not read sensor URL: "+err.message+". Check the URL and that it allows browser (CORS) requests.";});
+  }
+  function push(d){hist.push(d);if(hist.length>60)hist.shift();draw(d);}
+  function gauge(id,v,min,max,lo,hi){
+    var c=document.getElementById(id),g=c.getContext("2d"),cx=80,cy=90,r=65;g.clearRect(0,0,160,100);
+    g.lineWidth=14;g.lineCap="butt";
+    function arc(a,b,col){g.strokeStyle=col;g.beginPath();g.arc(cx,cy,r,Math.PI+Math.PI*a,Math.PI+Math.PI*b);g.stroke();}
+    function f(x){return Math.min(1,Math.max(0,(x-min)/(max-min)));}
+    arc(0,1,"#e3ecec");
+    if(lo!=null)arc(0,f(lo),"#f6c9d3");if(hi!=null)arc(f(hi),1,"#f6c9d3");
+    if(v!=null){var a=Math.PI+Math.PI*f(v);g.strokeStyle="#0b4a48";g.lineWidth=3;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*(r-4),cy+Math.sin(a)*(r-4));g.stroke();}
+  }
+  function alerts(d,c){
+    var out=[];if(!d)return out;
+    if(d.level!=null&&c.levelHigh!==""&&d.level>=+c.levelHigh)out.push("High level");
+    if(d.ph!=null&&((c.phLow!==""&&d.ph<+c.phLow)||(c.phHigh!==""&&d.ph>+c.phHigh)))out.push("pH out of range");
+    if(d.flow!=null&&c.flowLow!==""&&d.flow<+c.flowLow)out.push("No flow");
+    if(d.flow!=null&&c.flowHigh!==""&&d.flow>+c.flowHigh)out.push("High flow");
+    return out;
+  }
+  function draw(d){
+    var c=cfg(),demo=c.mode==="demo",card=document.getElementById("view-monitor");
+    card.classList.toggle("m-demo",demo);
+    document.getElementById("m-banner").innerHTML=demo?'<div class="demo-banner">⚠ DEMO SENSOR: SIMULATED DATA, NOT REAL READINGS</div>':c.mode==="url"?'<div class="live-banner">Real sensor: '+e(c.url)+'</div>':'<p class="hint">No sensor connected. Choose "Demo sensor (simulated data)" to try it, or connect a real sensor below.</p>';
+    gauge("g-ph",d&&d.ph,0,14,+c.phLow,+c.phHigh);gauge("g-flow",d&&d.flow,0,Math.max(60,+c.flowHigh*1.2||60),null,+c.flowHigh);gauge("g-level",d&&d.level,0,100,null,+c.levelHigh);
+    function s(v,n){return v==null?"--":v.toFixed(n);}
+    document.getElementById("v-ph").textContent=d?s(d.ph,2):"--";document.getElementById("v-flow").textContent=d?s(d.flow,1):"--";document.getElementById("v-level").textContent=d?s(d.level,0):"--";
+    var al=alerts(d,c);
+    document.getElementById("m-alerts").innerHTML=(demo?'<span class="badge badge-demo">SIMULATED</span>':'')+(d?(al.length?al.map(function(x){return '<span class="badge badge-overdue">⚠ '+x+(demo?' (sim)':'')+'</span>';}).join(""):'<span class="badge badge-ok">All readings normal'+(demo?' (sim)':'')+'</span>'):'');
+    document.getElementById("m-status").textContent=d?(demo?"Simulated reading at ":"Last reading at ")+d.ts.toLocaleTimeString():"";
+    var cv=document.getElementById("m-chart"),g=cv.getContext("2d"),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+    if(demo){g.save();g.globalAlpha=.12;g.fillStyle="#8a5a00";g.font="bold 40px sans-serif";g.textAlign="center";g.fillText("SIMULATED DATA",W/2,H/2+14);g.restore();}
+    var series=[["level",0,100,"#8b5a2b","Level %"],["ph",0,14,"#0f5f5c","pH"],["flow",0,Math.max(60,+c.flowHigh*1.2||60),"#1e3a8a","Flow"]];
+    series.forEach(function(sr,i){
+      g.strokeStyle=sr[3];g.lineWidth=2;g.beginPath();var first=true;
+      hist.forEach(function(p,k){var v=p[sr[0]];if(v==null)return;var x=10+k*(W-20)/59,y=H-10-(v-sr[1])/(sr[2]-sr[1])*(H-30);if(first){g.moveTo(x,y);first=false;}else g.lineTo(x,y);});
+      g.stroke();g.fillStyle=sr[3];g.font="12px sans-serif";g.fillText(sr[4],10+i*70,14);
+    });
+  }
+  sel.addEventListener("change",selectAsset);
+  ms.addEventListener("submit",function(ev){ev.preventDefault();var c={};Object.keys(DEF).forEach(function(k){c[k]=ms[k].value;});mon[cur]=c;sv(MKEY,mon);hist=[];sim=null;start();});
+  document.addEventListener("visibilitychange",function(){if(document.hidden)stop();else start();});
+  render();selectAsset();
 })();
 </script>
 </body>
