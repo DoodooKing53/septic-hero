@@ -210,6 +210,34 @@
     .stats, .form-grid, .company-dl { grid-template-columns: 1fr; }
     .full { grid-column: auto; }
   }
+  .eh-note { background:#fff8e6; border:1px solid #f1dca4; border-radius:8px; padding:10px 12px; font-size:.92rem; }
+  .eh-table td a { color: var(--teal-deep); font-weight:600; word-break: break-word; }
+  .eh-table small { display:block; color:var(--muted); font-weight:400; }
+  .game-card { overflow:hidden; }
+  .game-wrap { display:flex; gap:16px; align-items:flex-start; justify-content:center; flex-wrap:wrap; }
+  .game-board-wrap { position:relative; width:min(300px, 72vw); }
+  #tt-board { width:100%; height:auto; display:block; border-radius:10px; background:#1d2b22; border:3px solid var(--teal-deep); touch-action:none; }
+  .tt-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; background:rgba(11,74,72,.86); color:#fff; border-radius:10px; padding:16px; }
+  .tt-overlay[hidden] { display:none; }
+  .tt-overlay h3 { margin:0 0 8px; font-size:1.6rem; }
+  .tt-overlay a { color:#ffe08a; font-weight:700; }
+  .game-side { display:grid; gap:8px; min-width:140px; }
+  .tt-stat { background:#f3fafa; border-radius:8px; padding:6px 10px; display:flex; flex-direction:column; }
+  .tt-stat span { font-size:.75rem; text-transform:uppercase; color:var(--teal); letter-spacing:.04em; }
+  .tt-stat b { font-size:1.3rem; }
+  .tt-meter { height:14px; background:#dfe9e8; border-radius:7px; overflow:hidden; }
+  #tt-meter-fill { height:100%; width:0; background:linear-gradient(90deg,#6b8e23,#8b5a2b); transition:width .2s; }
+  .tt-msg { min-height:2.6em; margin:0; font-weight:700; color:#8b5a2b; max-width:160px; }
+  .tt-pad { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+  .tt-pad button { min-width:58px; min-height:52px; font-size:1.3rem; border-radius:10px; border:1px solid var(--line); background:#fff; user-select:none; touch-action:manipulation; }
+  @media (max-width: 600px) {
+    .game-board-wrap { width: min(250px, 66vw); }
+    .game-side { grid-template-columns: repeat(3, 1fr); width: 100%; min-width: 0; }
+    .tt-stat { padding: 4px 6px; } .tt-stat b { font-size: 1.05rem; }
+    .tt-msg { max-width: none; grid-column: 1 / -1; min-height: 1.4em; }
+    .tt-pad { position: sticky; bottom: 0; background: #fff; padding: 8px 0; z-index: 2; }
+    #tt-next { width: 64px; height: 64px; }
+  }
 </style>
 </head>
 <body>
@@ -223,6 +251,8 @@
     <button type="button" data-view="customers">Customers</button>
     <button type="button" data-view="dispatch">Dispatch</button>
     <button type="button" data-view="estimates">Estimates</button>
+    <button type="button" data-view="eh">Environmental Health</button>
+    <button type="button" data-view="game">Tank Tumble</button>
     <button type="button" data-view="settings">Settings</button>
   </nav>
 </header>
@@ -468,6 +498,61 @@
           </div>
         </div>
       </form>
+    </div>
+  </section>
+
+  <section id="view-eh" class="view">
+    <div class="card">
+      <div class="toolbar">
+        <h2>Georgia Environmental Health Offices</h2>
+        <input id="eh-search" type="search" placeholder="Search county or district…" aria-label="Search county or district">
+      </div>
+      <p class="hint">All 159 Georgia counties, grouped by the 18 public health districts. Tap a phone number to call, an email to write, or "Office page" to open the official district/county environmental health website.</p>
+      <p class="eh-note"><strong>Last checked: Oct 10, 2026.</strong> Phone numbers and addresses come from the Georgia DPH county Environmental Health office list. Emails are only shown where the health district publishes one (labeled county or district). Offices move and numbers change, so call to confirm before visiting. State EH office: <a href="tel:+14046576534">(404) 657-6534</a>.</p>
+      <p id="eh-count" class="hint"></p>
+      <div class="table-wrap">
+        <table class="eh-table">
+          <thead><tr><th>County</th><th>District</th><th>Phone</th><th>Email</th><th>Office</th></tr></thead>
+          <tbody id="eh-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-game" class="view">
+    <div class="card game-card">
+      <h2>Tank Tumble</h2>
+      <p class="hint">Stack the pipes, tanks and drainfield pieces. Fill a row to pump it out before the tank backs up! Keys: ← → move, ↑ rotate, ↓ soft drop, Space hard drop, P pause. On phones, use the buttons or swipe (tap = rotate).</p>
+      <div class="game-wrap">
+        <div class="game-board-wrap">
+          <canvas id="tt-board" width="300" height="600" aria-label="Tank Tumble game board"></canvas>
+          <div id="tt-overlay" class="tt-overlay">
+            <div>
+              <h3 id="tt-ov-title">Tank Tumble</h3>
+              <p id="tt-ov-text">Keep the tank from filling up!</p>
+              <p id="tt-ov-call" hidden>Real tank backing up? <a href="tel:+14045284631">Call Southern Septic (404) 528-4631</a></p>
+              <button type="button" class="btn btn-primary" id="tt-start">Start pumping</button>
+            </div>
+          </div>
+        </div>
+        <div class="game-side">
+          <div class="tt-stat"><span>Score</span><b id="tt-score">0</b></div>
+          <div class="tt-stat"><span>High score</span><b id="tt-high">0</b></div>
+          <div class="tt-stat"><span>Level</span><b id="tt-level">1</b></div>
+          <div class="tt-stat"><span>Rows pumped</span><b id="tt-lines">0</b></div>
+          <div class="tt-stat"><span>Next</span><canvas id="tt-next" width="96" height="96"></canvas></div>
+          <div class="tt-stat"><span>Tank full</span><div class="tt-meter"><div id="tt-meter-fill"></div></div></div>
+          <p id="tt-msg" class="tt-msg" aria-live="polite"></p>
+          <button type="button" class="btn" id="tt-pause">Pause</button>
+        </div>
+      </div>
+      <div class="tt-pad" aria-label="Game controls">
+        <button type="button" data-tt="left" aria-label="Move left">◀</button>
+        <button type="button" data-tt="rotate" aria-label="Rotate">⟳</button>
+        <button type="button" data-tt="right" aria-label="Move right">▶</button>
+        <button type="button" data-tt="down" aria-label="Soft drop">▼</button>
+        <button type="button" data-tt="drop" aria-label="Hard drop">⤓ Drop</button>
+      </div>
     </div>
   </section>
 
@@ -966,6 +1051,1552 @@
   wireCustomerLookup("e-customer", "e-address");
   fillSettingsForm();
   renderAll();
+})();
+</script>
+<script>
+window.GA_EH_DATA=[
+{
+"county": "Appling",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "34 Walnut St., Baxley",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Atkinson",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "818-A E. Austin Rd., Pearson",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Bacon",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "101 N. Wayne St., Alma",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Baker",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 734-5226",
+"address": "100 Sunset Blvd., Newton",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Baldwin",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 445-1591",
+"address": "953 Barrows Ferry Rd.,N.E., Milledgeville",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Banks",
+"district": "2 North (Gainesville)",
+"phone": "(706) 677-5009",
+"address": "667 Thompson Street, Homer",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Barrow",
+"district": "10 Northeast (Athens)",
+"phone": "(770) 307-3502",
+"address": "233 E. Broad Street, Winder",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Bartow",
+"district": "1-1 Northwest (Rome)",
+"phone": "(770) 387-2614",
+"address": "5355 Covenant Drive, Cartersville",
+"email": "Victor.Abercrombie@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Ben Hill",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 426-5293",
+"address": "251 Appomattox Rd., Fitzgerald",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Berrien",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 686-1770",
+"address": "600-A  S. Jefferson St., Nashville",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Bibb",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 749-0106",
+"address": "1600 Forsyth Street, Macon",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Bleckley",
+"district": "5-1 South Central (Dublin)",
+"phone": "(478) 934-6590",
+"address": "102 S.E. 8th St., Cochran",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Brantley",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "115 Florida Ave., Nahunta",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Brooks",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 263-7585",
+"address": "500 E. Courtland Ave., Quitman",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Bryan",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 756-2636",
+"address": "66 Captain Matthew Freeman Drive, Suite 146, Richmond Hill",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/",
+"phone2": "(912) 653-4333",
+"addr2": "430 Ledford St., Pembroke"
+},
+{
+"county": "Bulloch",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "1 West Altman Street, Statesboro",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Burke",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 554-3456",
+"address": "332 Dogwood Dr., Waynesboro",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Butts",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 504-2230",
+"address": "463 Ernest Biles Dr., Suite A, Jackson",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Calhoun",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 849-2515",
+"address": "29040 N. Bermuda St., Morgan",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Camden",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 729-6012",
+"address": "107 Gross Road, Ste. 4, Kingsland",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Candler",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "428 N. Rountree St., Metter",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Carroll",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 836-6781",
+"address": " 997 Newnan Rd. Room 206, Carrollton",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Catoosa",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 406-2030",
+"address": "182 Tiger Trail, Ringgold",
+"email": "Jill.VanDyke@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Charlton",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "1209 North 3rd St., Folkston",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Chatham",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 356-2160",
+"address": "1395 Eisenhower Dr., Savannah",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Chattahoochee",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "McNaughton St. & 57, Cusseta",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Chattooga",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 857-3471",
+"address": "60 Farrar Dr., Summerville",
+"email": "kelsey.castrejon@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Cherokee",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(770) 479-0444",
+"address": "1130 Bluffs Parkway, Canton",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Clarke",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 583-2658",
+"address": "189 Paradise Blvd., Athens",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Clay",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "201 1/2 Wilson St., Fort Gaines",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Clayton",
+"district": "3-3 Clayton (Morrow)",
+"phone": "(678) 610-7469",
+"address": "1117 Battle Creek Road, Jonesboro",
+"email": "vincent.parris@dph.ga.gov",
+"emailNote": "county EH contact",
+"url": "https://www.claytoncountypublichealth.org/environmental-health/"
+},
+{
+"county": "Clinch",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "285 Sweat St., Homerville",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Cobb",
+"district": "3-1 Cobb & Douglas",
+"phone": "(770) 514-2300",
+"address": "1738 County Services Parkway, Marietta",
+"email": "",
+"emailNote": "",
+"url": "https://cobbanddouglaspublichealth.com/programs/environmental-health/"
+},
+{
+"county": "Coffee",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "1111 W. Baker Hwy, Douglas",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Colquitt",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 589-8464",
+"address": "214 W. Central Ave., Moultrie",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Columbia",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 868-3330",
+"address": "1930 William Few Pkwy, Grovetown",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Cook",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 896-8297",
+"address": "204 N. Parrish Ave., Adel",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Coweta",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 683-7345",
+"address": "28 E Washington St, Newnan",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Crawford",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 836-3167",
+"address": "301 McCrary Ave., Roberta",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Crisp",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "111 East 24th Ave., Cordele",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Dade",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 657-4213",
+"address": "229 First St., Trenton",
+"email": "Rachel.Adams@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Dawson",
+"district": "2 North (Gainesville)",
+"phone": "(706) 265-2930",
+"address": "189 Hwy. 53 W. Suite 102, Dawsonville",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "DeKalb",
+"district": "3-5 DeKalb",
+"phone": "(404) 294-3700",
+"address": "445 Winn Way, Suite 320, Decatur",
+"email": "DeKalb.EH@dph.ga.gov",
+"emailNote": "county EH",
+"url": "https://dekalbpublichealth.com/environmental-health/hospitality/"
+},
+{
+"county": "Decatur",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 515-4341",
+"address": "101 S Broad Street, Bainbridge",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Dodge",
+"district": "5-1 South Central (Dublin)",
+"phone": "(478) 374-5576",
+"address": "1121 Plaza Avenue, Eastman",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Dooly",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "204 W. Union St., Vienna",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Dougherty",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 438-3943",
+"address": "240 Pine Ave. Suite 360, Albany",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Douglas",
+"district": "3-1 Cobb & Douglas",
+"phone": "(770) 920-7311",
+"address": "4655 Timber Ridge Dr, Douglasville",
+"email": "",
+"emailNote": "",
+"url": "https://cobbanddouglaspublichealth.com/programs/environmental-health/"
+},
+{
+"county": "Early",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 207-0049",
+"address": "618 Flowers Dr., Blakely",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Echols",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 559-5103",
+"address": "149 Hwy. 94 East, Statenville",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Effingham",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 754-6850",
+"address": "802 Hwy 119, South, Springfield",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Elbert",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 283-3775",
+"address": "618 Jones Street, Elberton",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Emanuel",
+"district": "6 East Central (Augusta)",
+"phone": "(478) 237-7501",
+"address": "50 Hwy 56 North, Swainsboro",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Evans",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "4 N. Newton St., Claxton",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Fannin",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(706) 632-3024",
+"address": "344 West Main Street, Blue Ridge",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Fayette",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 305-5415",
+"address": "140 Stonewall Ave.,West, Suite 200, Fayetteville",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Floyd",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 295-6316",
+"address": "16 East 12th Street, Rome",
+"email": "Timothy.Hendrix@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Forsyth",
+"district": "2 North (Gainesville)",
+"phone": "(770) 781-6909",
+"address": "514 West Maple Street Suite 404, Cumming",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Franklin",
+"district": "2 North (Gainesville)",
+"phone": "(706) 918-3185",
+"address": "6955 Ga. Hwy 145 S., Carnesville",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Fulton",
+"district": "3-2 Fulton",
+"phone": "(770) 520-7500",
+"address": "10 Park Place, 4th Floor, Atlanta",
+"email": "FCBOH.EnvHealth@dph.ga.gov",
+"emailNote": "county EH",
+"url": "https://fultoncountyboh.com/environmental-health/food-service/"
+},
+{
+"county": "Gilmer",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(706) 635-6050",
+"address": "1 Broad Street, Ellijay",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Glascock",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 598-2061",
+"address": "668 Main St., West, Gibson",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Glynn",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 279-2940",
+"address": "1725 Reynolds Street, #105, Brunswick",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Gordon",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 624-1440",
+"address": "310 N. River St., Calhoun",
+"email": "Matthew.Williams@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Grady",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 378-9081",
+"address": "250 N. BRd. St. Box 6, Cairo",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Greene",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 453-0965",
+"address": "1031 Appalachia Rd., Box 867, Greensboro",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Gwinnett",
+"district": "3-4 Gwinnett, Newton & Rockdale (Lawrenceville)",
+"phone": "(770) 963-5132",
+"address": "455 Grayson Hwy Suite 600, Lawrenceville",
+"email": "",
+"emailNote": "",
+"url": "https://www.gnrhealth.com/environmental-health/"
+},
+{
+"county": "Habersham",
+"district": "2 North (Gainesville)",
+"phone": "(706) 776-7659",
+"address": "130 Jacob\u2019s Way, Suite 102, Clarkesville",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Hall",
+"district": "2 North (Gainesville)",
+"phone": "(770) 531-3973",
+"address": "P.O. Box 5901, Gainesville",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Hancock",
+"district": "5-2 North Central (Macon)",
+"phone": "(706) 444-6616",
+"address": "451-A Boland St., Sparta",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Haralson",
+"district": "1-1 Northwest (Rome)",
+"phone": "(770) 646-4301",
+"address": "133 Buchanan By-Pass, Buchanan",
+"email": "kelsey.castrejon@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Harris",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "210 Forrest Hills Ave., Hamilton",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Hart",
+"district": "2 North (Gainesville)",
+"phone": "(706) 376-5117",
+"address": "64 Reynolds Dr., Hartwell",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Heard",
+"district": "4 District 4 (LaGrange)",
+"phone": "(706) 675-3456",
+"address": "7699 Hwy 27, Franklin",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Henry",
+"district": "4 District 4 (LaGrange)",
+"phone": "(470) 661-0044",
+"address": "137 Henry Parkway, McDonough",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Houston",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 218-2020",
+"address": "98 Cohen Walker Dr., Warner Robins",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Irwin",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 238-9540",
+"address": "407 W. Fourth St., Ocilla",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Jackson",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 367-3643",
+"address": "260 Lee Street, Jefferson",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Jasper",
+"district": "5-2 North Central (Macon)",
+"phone": "(706) 468-4239",
+"address": "825 Eatonton Street, Monticello",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Jeff Davis",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "30 E. Sycamore St., Hazlehurst",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Jefferson",
+"district": "6 East Central (Augusta)",
+"phone": "(478) 625-3716",
+"address": "2501 U.S. Hwy #1, North, Louisville",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Jenkins",
+"district": "6 East Central (Augusta)",
+"phone": "(478) 982-2811",
+"address": "709 Virginai Ave., Millen",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Johnson",
+"district": "5-1 South Central (Dublin)",
+"phone": "(478) 864-3542",
+"address": "120 Hilton Holton Dr., Wrightsville",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Jones",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 986-3164",
+"address": "114 Forest Ave., Gray",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Lamar",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 358-1483",
+"address": "100 Academy Drive, Barnesville",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Lanier",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 482-3294",
+"address": "53 West Murrell St, Lakeland",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Laurens",
+"district": "5-1 South Central (Dublin)",
+"phone": "(478) 275-6779",
+"address": "654 County Farm Road, Dublin",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Lee",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 759-3016",
+"address": "112 Park St., Leesburg",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Liberty",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 368-5520",
+"address": "P.O. Box 221, Hinesville",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Lincoln",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 359-3154",
+"address": "176 N. Peachtree St., Lincolnton",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Long",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 545-2107",
+"address": "584 N. Macon St., Ludowici",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Lowndes",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 245-2314",
+"address": "206 S. Patterson St., Valdosta",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Lumpkin",
+"district": "2 North (Gainesville)",
+"phone": "(706) 867-2730",
+"address": "25 Short St., Suite B, Dahlonega",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Macon",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "110 Chatham St., Oglethorpe",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Madison",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 795-2131",
+"address": "1424 Highway 98 West, Danielsville",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Marion",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "111-A Baker St., Buena Vista",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "McDuffie",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 595-1740",
+"address": "307 Greenway St., Thomson",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "McIntosh",
+"district": "9-1 Coastal (Savannah)",
+"phone": "(912) 832-5473",
+"address": "1335 Hwy 99, Townsend",
+"email": "",
+"emailNote": "",
+"url": "https://www.coastalhealthdistrict.org/programs-services/environmental-health-2/environmental_health_offices/"
+},
+{
+"county": "Meriwether",
+"district": "4 District 4 (LaGrange)",
+"phone": "(706) 672-4974",
+"address": "51 Gay Connector, Greenville",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Miller",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 758-3344",
+"address": "250 West Pine St., Colquitt",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Mitchell",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 355-3081",
+"address": "88 West Oakland Ave., Camilla",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Monroe",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 993-3081",
+"address": "106 Martin Luther King, Jr. Dr., Forsyth",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Montgomery",
+"district": "5-1 South Central (Dublin)",
+"phone": "(912) 583-4602",
+"address": "218 West BRd. St., Mt. Vernon",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Morgan",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 752-1268",
+"address": "2005 S. Main St., Suite 200, Madison",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Murray",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(706) 695-0266",
+"address": "121 North Fourth Avenue, Chatsworth",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Muscogee",
+"district": "7 West Central (Columbus)",
+"phone": "(706) 321-6170",
+"address": "2100 Comer Ave, Columbus",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Newton",
+"district": "3-4 Gwinnett, Newton & Rockdale (Lawrenceville)",
+"phone": "(770) 784-2121",
+"address": "1113 Usher St. Suite 303, Covington",
+"email": "",
+"emailNote": "",
+"url": "https://www.gnrhealth.com/environmental-health/"
+},
+{
+"county": "Oconee",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 769-7060",
+"address": "1060 Experiment Station Rd., Watkinsville",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Oglethorpe",
+"district": "10 Northeast (Athens)",
+"phone": "(706) 743-8181",
+"address": "305 Union Point Street, Lexington",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Paulding",
+"district": "1-1 Northwest (Rome)",
+"phone": "(770) 443-7877",
+"address": "240 Constitution Blvd, Suite 1-A, Dallas",
+"email": "Selena.Colton@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Peach",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 825-6134",
+"address": "406 E. Church St., Fort Valley",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Pickens",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(706) 253-0900",
+"address": "1266 East Church Street, Jasper",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Pierce",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "715 Ware St., Blackshear",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Pike",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 567-8972",
+"address": "541 Griffin St., Zebulon",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Polk",
+"district": "1-1 Northwest (Rome)",
+"phone": "(770) 749-2270",
+"address": "125 East Ware St., Cedartown",
+"email": "Tiffany.Schrader@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Pulaski",
+"district": "5-1 South Central (Dublin)",
+"phone": "(478) 783-1361",
+"address": "301 N. Lumpkin St., Hawkinsville",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Putnam",
+"district": "5-2 North Central (Macon)",
+"phone": "(706) 484-2914",
+"address": "103 N. Washington St., Eatonton",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Quitman",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "105 Main St., Georgetown",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Rabun",
+"district": "2 North (Gainesville)",
+"phone": "(706) 212-0294",
+"address": "184 South Main St, Clayton",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Randolph",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "207 N. Webster St., Cuthbert",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Richmond",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 667-4234",
+"address": "1916 North Leg Road, Bldg K, Augusta",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Rockdale",
+"district": "3-4 Gwinnett, Newton & Rockdale (Lawrenceville)",
+"phone": "(770) 278-7340",
+"address": "1329 Portman Drive, Suite F, Conyers",
+"email": "",
+"emailNote": "",
+"url": "https://www.gnrhealth.com/environmental-health/"
+},
+{
+"county": "Schley",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "103 Oglethorpe St., Ellaville",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Screven",
+"district": "6 East Central (Augusta)",
+"phone": "(912) 564-2182",
+"address": "416 Pine St, Sylvania",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Seminole",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 495-6590",
+"address": "904 N. Wiley Ave., Donalsonville",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Spalding",
+"district": "4 District 4 (LaGrange)",
+"phone": "(770) 467-4230",
+"address": "1007 Memorial Dr., Griffin",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Stephens",
+"district": "2 North (Gainesville)",
+"phone": "(706) 282-4507",
+"address": "64 Blvd, Suite 102, Toccoa",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Stewart",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "Hwy 27 South, Lumpkin",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Sumter",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "1601 N MLK Jr Blvd, Americus",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Talbot",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "1073 Woodland Hwy., Talbotton",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Taliaferro",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 456-2316",
+"address": "109 Commerce St., Crawfordville",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Tattnall",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "1000 N Downing Musgrove Hwy., Glennville",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Taylor",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "Hwy 137-West, Butler",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Telfair",
+"district": "5-1 South Central (Dublin)",
+"phone": "(229) 868-7404",
+"address": "713-A Telfair Ave.., McRae",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Terrell",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 995-2188",
+"address": "969 Forrester Dr., SE, Dawson",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Thomas",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 226-4241",
+"address": "484 Smith Ave., Thomasville",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+},
+{
+"county": "Tift",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 386-7967",
+"address": "305 E 12th Street, Tifton",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Toombs",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "714 NW Brd. St., Lyons",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Towns",
+"district": "2 North (Gainesville)",
+"phone": "(706) 896-8873",
+"address": "1104 Jack Dayton Circle, Young Harris",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Treutlen",
+"district": "5-1 South Central (Dublin)",
+"phone": "(912) 529-4217",
+"address": "619 Third St., Soperton",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Troup",
+"district": "4 District 4 (LaGrange)",
+"phone": "(706) 298-3702",
+"address": "900 Dallis Street Suite A, LaGrange",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Turner",
+"district": "8-1 South (Valdosta)",
+"phone": "(229) 567-4357",
+"address": "745 Hudson St., Ashburn",
+"email": "DPH-shdinfo@dph.ga.gov",
+"emailNote": "district general",
+"url": "https://www.southhealthdistrict.com/programs-services/enviromental-srvs/environmental-health-forms/"
+},
+{
+"county": "Twiggs",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 945-3351",
+"address": "26 Main St., Jeffersonville",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Union",
+"district": "2 North (Gainesville)",
+"phone": "(706) 781-3824",
+"address": "46 Hughes St., Suite B, Blairsville",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Upson",
+"district": "4 District 4 (LaGrange)",
+"phone": "(706) 647-5749",
+"address": "305 South Hightower, Suite 110, Thomaston",
+"email": "",
+"emailNote": "",
+"url": "https://www.district4health.org/environmental-health/"
+},
+{
+"county": "Walker",
+"district": "1-1 Northwest (Rome)",
+"phone": "(706) 639-2574",
+"address": "101 Napier St., LaFayette",
+"email": "Jason.Osgatharp@dph.ga.gov",
+"emailNote": "county EH complaints contact",
+"url": "https://nwgapublichealth.org/environmental-health/"
+},
+{
+"county": "Walton",
+"district": "10 Northeast (Athens)",
+"phone": "(770) 267-1430",
+"address": "1110 East Spring St Suite 200, Monroe",
+"email": "",
+"emailNote": "",
+"url": "https://northeasthealthdistrict.org/services/environmental-health/"
+},
+{
+"county": "Ware",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "604 Riverside Dr., Waycross",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Warren",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 465-2252",
+"address": "510 Legion Dr., Warrenton",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Washington",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 552-3210",
+"address": "201 Morningside Dr., Sandersville",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Wayne",
+"district": "9-2 Southeast (Waycross)",
+"phone": "(855) 473-4374",
+"address": "240 Peachtree Street, Jesup",
+"email": "",
+"emailNote": "",
+"url": "https://www.sehdph.org/services/environmental-health-programs/"
+},
+{
+"county": "Webster",
+"district": "7 West Central (Columbus)",
+"phone": "(833) 337-1749",
+"address": "6814 Washington St., Preston",
+"email": "",
+"emailNote": "",
+"url": "https://westcentralhealthdistrict.com/programs-services/environmental-health/"
+},
+{
+"county": "Wheeler",
+"district": "5-1 South Central (Dublin)",
+"phone": "(912) 568-7061",
+"address": "414 Kent St., Alamo",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "White",
+"district": "2 North (Gainesville)",
+"phone": "(706) 348-7698",
+"address": "1241 Helen Hwy., Unit 210, Cleveland",
+"email": "",
+"emailNote": "",
+"url": "https://phdistrict2.org/environmental-health/"
+},
+{
+"county": "Whitfield",
+"district": "1-2 North Georgia (Dalton)",
+"phone": "(706) 272-2005",
+"address": "136 Gillispie Drive, Dalton",
+"email": "info@nghd.org",
+"emailNote": "district general",
+"url": "https://www.nghd.org/nghd-services/category/environmental-health-copy"
+},
+{
+"county": "Wilcox",
+"district": "5-1 South Central (Dublin)",
+"phone": "(229) 365-2310",
+"address": "1001 Second Ave., Rochelle",
+"email": "",
+"emailNote": "",
+"url": "https://southcentralhealth.info/environmental-health-services"
+},
+{
+"county": "Wilkes",
+"district": "6 East Central (Augusta)",
+"phone": "(706) 678-2622",
+"address": "204 Gordon St., Washington",
+"email": "",
+"emailNote": "",
+"url": "https://ecphd.com/environmental-health/"
+},
+{
+"county": "Wilkinson",
+"district": "5-2 North Central (Macon)",
+"phone": "(478) 946-2226",
+"address": "123 High Hill St., Irwinton",
+"email": "",
+"emailNote": "",
+"url": "https://northcentralhealthdistrict.org/county-environmental-health-offices/"
+},
+{
+"county": "Worth",
+"district": "8-2 Southwest (Albany)",
+"phone": "(229) 777-2168",
+"address": "1012 W. Franklin St., Sylvester",
+"email": "",
+"emailNote": "",
+"url": "https://swhealthdistrict.org/environmental-health/"
+}
+];
+</script>
+<script>
+(function () {
+  // ---- Environmental Health directory ----
+  var data = window.GA_EH_DATA || [];
+  function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function tel(p){var d=String(p).replace(/\D/g,"");return d.length===10?"+1"+d:d;}
+  var body=document.getElementById("eh-body"), q=document.getElementById("eh-search"), cnt=document.getElementById("eh-count");
+  function renderEH(){
+    var s=(q.value||"").trim().toLowerCase();
+    var rows=data.filter(function(r){return !s||r.county.toLowerCase().indexOf(s)>-1||r.district.toLowerCase().indexOf(s)>-1;});
+    cnt.textContent="Showing "+rows.length+" of "+data.length+" counties";
+    body.innerHTML=rows.length?rows.map(function(r){
+      var ph='<a href="tel:'+tel(r.phone)+'">'+e(r.phone)+'</a><small>'+e(r.address)+'</small>';
+      if(r.phone2) ph+='<a href="tel:'+tel(r.phone2)+'">'+e(r.phone2)+'</a><small>'+e(r.addr2)+'</small>';
+      var em=r.email?'<a href="mailto:'+e(r.email)+'">'+e(r.email)+'</a><small>'+e(r.emailNote)+'</small>':'<small>Not published, call</small>';
+      return '<tr><td><strong>'+e(r.county)+'</strong></td><td>'+e(r.district)+'</td><td>'+ph+'</td><td>'+em+'</td><td><a href="'+e(r.url)+'" target="_blank" rel="noopener">Office page ↗</a></td></tr>';
+    }).join(""):'<tr><td colspan="5" class="empty">No county matches that search.</td></tr>';
+  }
+  q.addEventListener("input",renderEH); renderEH();
+
+  // ---- Tank Tumble game ----
+  var COLS=10,ROWS=20,SZ=30;
+  var cv=document.getElementById("tt-board"),ctx=cv.getContext("2d"),nx=document.getElementById("tt-next"),nctx=nx.getContext("2d");
+  var PIECES={
+    I:{m:[[1,1,1,1]],c:"#9aa5a8",n:"Pipe"},       // PVC pipe
+    O:{m:[[1,1],[1,1]],c:"#5b6f74",n:"Tank"},     // concrete tank
+    T:{m:[[0,1,0],[1,1,1]],c:"#3f8f8b",n:"Tee"},  // tee fitting
+    L:{m:[[0,0,1],[1,1,1]],c:"#8b5a2b",n:"Elbow"},
+    J:{m:[[1,0,0],[1,1,1]],c:"#a8743f",n:"Elbow"},
+    S:{m:[[0,1,1],[1,1,0]],c:"#6b8e23",n:"Drainfield"},
+    Z:{m:[[1,1,0],[0,1,1]],c:"#4f7a2a",n:"Drainfield"}
+  };
+  var KEYS=Object.keys(PIECES);
+  var PUNS=["Flush-tastic!","That's a royal flush!","Tank you very much!","Pumped and dumped!","You're on a roll… of paper!","No backups here!","Smells like victory!","Drain-ger averted!","What a stinkin' combo!","Number two-rific!"];
+  var LVL=["Level up! Things are moving faster down the line.","Pressure's rising!","Gotta go faster!"];
+  var board,cur,next,score,lines,level,high=+localStorage.getItem("tank-tumble-high")||0,dropMs,acc,last,running=false,paused=false,over=false,bag=[],raf=0,msgT=0;
+  function rnd(){if(!bag.length){bag=KEYS.slice();for(var i=bag.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=bag[i];bag[i]=bag[j];bag[j]=t;}}return bag.pop();}
+  function mk(k){var p=PIECES[k];return {k:k,m:p.m.map(function(r){return r.slice();}),c:p.c,x:Math.floor((COLS-p.m[0].length)/2),y:0};}
+  function rot(m){return m[0].map(function(_,i){return m.map(function(r){return r[i];}).reverse();});}
+  function hit(m,x,y){for(var r=0;r<m.length;r++)for(var c=0;c<m[r].length;c++)if(m[r][c]){var X=x+c,Y=y+r;if(X<0||X>=COLS||Y>=ROWS)return true;if(Y>=0&&board[Y][X])return true;}return false;}
+  function msg(t){var el=document.getElementById("tt-msg");el.textContent=t;clearTimeout(msgT);msgT=setTimeout(function(){el.textContent="";},2200);}
+  function hud(){
+    document.getElementById("tt-score").textContent=score;document.getElementById("tt-high").textContent=high;
+    document.getElementById("tt-level").textContent=level;document.getElementById("tt-lines").textContent=lines;
+    var top=ROWS;for(var r=0;r<ROWS;r++){if(board[r].some(Boolean)){top=r;break;}}
+    document.getElementById("tt-meter-fill").style.width=Math.round((ROWS-top)/ROWS*100)+"%";
+  }
+  function reset(){board=[];for(var r=0;r<ROWS;r++)board.push(new Array(COLS).fill(0));score=0;lines=0;level=1;dropMs=800;acc=0;bag=[];cur=mk(rnd());next=mk(rnd());over=false;hud();drawNext();}
+  function lock(){
+    cur.m.forEach(function(row,r){row.forEach(function(v,c){if(v&&cur.y+r>=0)board[cur.y+r][cur.x+c]=cur.c;});});
+    var cleared=0;for(var r=ROWS-1;r>=0;r--){if(board[r].every(Boolean)){board.splice(r,1);board.unshift(new Array(COLS).fill(0));cleared++;r++;}}
+    if(cleared){lines+=cleared;score+=[0,100,300,500,800][cleared]*level;msg(cleared>=4?"FULL PUMP-OUT! Tank emptied!":PUNS[Math.floor(Math.random()*PUNS.length)]);
+      var nl=Math.floor(lines/10)+1;if(nl>level){level=nl;dropMs=Math.max(90,800-(level-1)*70);msg(LVL[Math.floor(Math.random()*LVL.length)]);}}
+    if(score>high){high=score;try{localStorage.setItem("tank-tumble-high",high);}catch(x){}}
+    cur=next;next=mk(rnd());drawNext();
+    if(hit(cur.m,cur.x,cur.y))end();
+    hud();
+  }
+  function move(dx){if(!hit(cur.m,cur.x+dx,cur.y))cur.x+=dx;}
+  function turn(){var m=rot(cur.m);var kicks=[0,-1,1,-2,2];for(var i=0;i<kicks.length;i++){if(!hit(m,cur.x+kicks[i],cur.y)){cur.m=m;cur.x+=kicks[i];return;}}}
+  function down(){if(!hit(cur.m,cur.x,cur.y+1)){cur.y++;return true;}lock();return false;}
+  function drop(){var n=0;while(!hit(cur.m,cur.x,cur.y+1)){cur.y++;n++;}score+=n*2;lock();}
+  function cell(g,x,y,s,col){
+    g.fillStyle=col;g.fillRect(x*s+1,y*s+1,s-2,s-2);
+    g.fillStyle="rgba(255,255,255,.22)";g.fillRect(x*s+3,y*s+3,s-6,Math.max(3,s/6));
+    g.fillStyle="rgba(0,0,0,.25)";g.fillRect(x*s+1,y*s+s-5,s-2,4);
+    g.strokeStyle="rgba(0,0,0,.35)";g.lineWidth=1;g.beginPath();g.arc(x*s+s/2,y*s+s/2,s/6,0,7);g.stroke();
+  }
+  function draw(){
+    ctx.fillStyle="#2a1f14";ctx.fillRect(0,0,cv.width,cv.height);
+    for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){ctx.fillStyle=(r+c)%2?"#33261a":"#2e2217";ctx.fillRect(c*SZ,r*SZ,SZ,SZ);}
+    for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++)if(board[r][c])cell(ctx,c,r,SZ,board[r][c]);
+    if(cur&&!over){var gy=cur.y;while(!hit(cur.m,cur.x,gy+1))gy++;
+      ctx.globalAlpha=.25;cur.m.forEach(function(row,r){row.forEach(function(v,c){if(v)cell(ctx,cur.x+c,gy+r,SZ,cur.c);});});ctx.globalAlpha=1;
+      cur.m.forEach(function(row,r){row.forEach(function(v,c){if(v&&cur.y+r>=0)cell(ctx,cur.x+c,cur.y+r,SZ,cur.c);});});}
+  }
+  function drawNext(){nctx.clearRect(0,0,96,96);var m=next.m,s=22,ox=(96-m[0].length*s)/2,oy=(96-m.length*s)/2;nctx.save();nctx.translate(ox,oy);m.forEach(function(row,r){row.forEach(function(v,c){if(v)cell(nctx,c,r,s,next.c);});});nctx.restore();}
+  function loop(t){if(!running)return;if(!paused){acc+=t-last;if(acc>dropMs){acc=0;down();}}last=t;draw();if(running)raf=requestAnimationFrame(loop);}
+  var ov=document.getElementById("tt-overlay");
+  function overlay(title,text,call,btn){document.getElementById("tt-ov-title").textContent=title;document.getElementById("tt-ov-text").textContent=text;document.getElementById("tt-ov-call").hidden=!call;document.getElementById("tt-start").textContent=btn;ov.hidden=false;}
+  function start(){reset();running=true;paused=false;ov.hidden=true;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);msg("Start pumping!");}
+  function end(){over=true;running=false;draw();overlay("Tank's full!","Final score "+score+(score>=high&&score>0?" — new high score!":"")+". Looks like you need a pump-out.",true,"Play again");}
+  function pause(p){if(!running)return;paused=p==null?!paused:p;document.getElementById("tt-pause").textContent=paused?"Resume":"Pause";if(paused)overlay("Paused","Taking a bathroom break?",false,"Resume");else{ov.hidden=true;last=performance.now();}}
+  document.getElementById("tt-start").addEventListener("click",function(){if(running&&paused)pause(false);else start();});
+  document.getElementById("tt-pause").addEventListener("click",function(){pause();});
+  function act(a){if(!running||paused)return;if(a==="left")move(-1);else if(a==="right")move(1);else if(a==="rotate")turn();else if(a==="down"){if(down())score+=1;hud();}else if(a==="drop")drop();draw();}
+  function gameVisible(){return document.getElementById("view-game").classList.contains("active");}
+  document.addEventListener("keydown",function(ev){
+    if(!gameVisible())return;var t=ev.target.tagName;if(t==="INPUT"||t==="TEXTAREA"||t==="SELECT")return;
+    var m={ArrowLeft:"left",ArrowRight:"right",ArrowUp:"rotate",ArrowDown:"down"," ":"drop"};
+    if(ev.key==="p"||ev.key==="P"){pause();ev.preventDefault();return;}
+    if(m[ev.key]){ev.preventDefault();act(m[ev.key]);}
+  });
+  document.querySelectorAll("[data-tt]").forEach(function(b){
+    var a=b.getAttribute("data-tt"),iv=0,to=0;
+    function stop(){clearTimeout(to);clearInterval(iv);}
+    b.addEventListener("pointerdown",function(ev){ev.preventDefault();act(a);if(a==="left"||a==="right"||a==="down"){to=setTimeout(function(){iv=setInterval(function(){act(a);},70);},220);}});
+    ["pointerup","pointerleave","pointercancel"].forEach(function(n){b.addEventListener(n,stop);});
+  });
+  var sx=0,sy=0,st=0,moved=false;
+  cv.addEventListener("touchstart",function(ev){var t=ev.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();moved=false;ev.preventDefault();},{passive:false});
+  cv.addEventListener("touchmove",function(ev){var t=ev.touches[0],dx=t.clientX-sx,dy=t.clientY-sy,step=cv.getBoundingClientRect().width/COLS;
+    if(Math.abs(dx)>step){act(dx>0?"right":"left");sx=t.clientX;moved=true;}else if(dy>step){act("down");sy=t.clientY;moved=true;}ev.preventDefault();},{passive:false});
+  cv.addEventListener("touchend",function(ev){var t=ev.changedTouches[0],dy=t.clientY-sy;if(!moved&&Date.now()-st<250)act("rotate");else if(dy>80&&Date.now()-st<300)act("drop");});
+  document.querySelectorAll("nav button").forEach(function(b){b.addEventListener("click",function(){if(b.getAttribute("data-view")!=="game")pause(true);});});
+  document.addEventListener("visibilitychange",function(){if(document.hidden)pause(true);});
+  reset();draw();hud();
 })();
 </script>
 </body>
