@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Septic Hero — Southern Septic LLC</title>
+<style>
+  :root {
+    --teal: #0f5f5c;
+    --teal-deep: #0b4a48;
+    --ink: #1b2e2e;
+    --muted: #526666;
+    --line: #d5e4e3;
+    --bg: #f2f6f6;
+    --card: #ffffff;
+    --danger: #9f1239;
+    --ok: #0f5f5c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  header {
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  .header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px 20px;
+    padding-top: 16px;
+    padding-bottom: 4px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--teal);
+    letter-spacing: -0.02em;
+  }
+  #header-company {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+  nav { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 0; }
+  nav button {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 12px 12px 10px;
+  }
+  nav button[aria-current="page"] {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+  }
+  nav button:hover { color: var(--teal-deep); }
+  main { padding-top: 22px; padding-bottom: 48px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .stack { display: grid; gap: 16px; }
+  h2 {
+    margin: 0 0 12px;
+    color: var(--teal);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px 20px;
+    box-shadow: 0 1px 2px rgba(16, 42, 42, 0.04);
+  }
+  .version-line { margin: 0 0 16px; font-size: 1.05rem; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stat h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--teal);
+  }
+  .stat .num {
+    margin: 8px 0 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+  }
+  .stat .sub { margin: 4px 0 0; color: var(--muted); }
+  .company-dl {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 6px 12px;
+    margin: 0;
+  }
+  .company-dl dt { color: var(--muted); }
+  .company-dl dd { margin: 0; }
+  a { color: var(--teal-deep); }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .full { grid-column: 1 / -1; }
+  label { display: block; font-weight: 600; font-size: 0.92rem; margin-bottom: 4px; }
+  .req { color: var(--danger); }
+  .hint { margin: 4px 0 0; color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #b7cccc;
+    border-radius: 8px;
+    background: #fff;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  .form-actions { display: flex; align-items: center; gap: 12px; }
+  .btn {
+    display: inline-block;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    background: #fff;
+  }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-deep); }
+  .btn-ok { color: var(--ok); border-color: #9ec9c6; }
+  .btn-ok:hover { background: #f3fafa; }
+  .btn-danger { color: var(--danger); border-color: #f0c2ce; }
+  .btn-danger:hover { background: #fff5f7; }
+  .btn-small { padding: 5px 10px; font-size: 0.875rem; }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .toolbar h2 { margin: 0; }
+  .toolbar input, .toolbar select { width: auto; min-width: 180px; }
+  .pipeline {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: #f3fafa;
+    border-radius: 8px;
+    color: var(--teal-deep);
+    font-weight: 700;
+  }
+  .pipeline span { font-weight: 500; color: var(--muted); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e6f0f0;
+    vertical-align: top;
+  }
+  th {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: #f5fbfb;
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.done td { color: var(--muted); }
+  td.actions { white-space: nowrap; }
+  td.actions .btn { margin-right: 6px; }
+  .empty { color: var(--muted); padding: 16px 12px; }
+  .badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .badge-open { background: #e7f6f4; color: var(--teal-deep); }
+  .badge-done { background: #eef2f2; color: #3d4f4f; }
+  .badge-draft { background: #f4f4f5; color: #3f3f46; }
+  .badge-sent { background: #e7f0fb; color: #1e3a8a; }
+  .badge-accepted { background: #e8f6ee; color: #166534; }
+  .status-select { width: auto; min-width: 120px; padding: 4px 8px; }
+  #flash {
+    min-height: 1.3rem;
+    margin: 0 0 12px;
+    font-weight: 700;
+    color: var(--teal-deep);
+  }
+  .footnote { margin: 18px 0 0; color: var(--muted); font-size: 0.9rem; }
+  @media (max-width: 800px) {
+    .stats, .form-grid, .company-dl { grid-template-columns: 1fr; }
+    .full { grid-column: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap header-row">
+    <h1>Septic Hero</h1>
+    <p id="header-company">Southern Septic LLC</p>
+  </div>
+  <nav class="wrap" aria-label="Main">
+    <button type="button" data-view="dashboard" aria-current="page">Dashboard</button>
+    <button type="button" data-view="customers">Customers</button>
+    <button type="button" data-view="dispatch">Dispatch</button>
+    <button type="button" data-view="estimates">Estimates</button>
+    <button type="button" data-view="settings">Settings</button>
+  </nav>
+</header>
+<main class="wrap">
+  <div id="flash" role="status" aria-live="polite"></div>
+
+  <section id="view-dashboard" class="view active">
+    <h2>Dashboard</h2>
+    <p class="version-line">This is the usable version of Septic Hero.</p>
+    <div class="stats">
+      <article class="card stat">
+        <h3>Customers</h3>
+        <p class="num" id="stat-customers">0</p>
+      </article>
+      <article class="card stat">
+        <h3>Open jobs</h3>
+        <p class="num" id="stat-jobs">0</p>
+        <p class="sub">Not marked complete</p>
+      </article>
+      <article class="card stat">
+        <h3>Open estimates</h3>
+        <p class="num" id="stat-estimates">0</p>
+        <p class="sub" id="stat-estimates-sum">$0.00 total</p>
+      </article>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>Company</h2>
+      <dl class="company-dl" id="company-snapshot"></dl>
+    </div>
+  </section>
+
+  <section id="view-customers" class="view">
+    <div class="stack">
+      <div class="card">
+        <h2>Add customer</h2>
+        <form id="customer-form">
+          <div class="form-grid">
+            <div>
+              <label for="c-name">Name <span class="req">*</span></label>
+              <input id="c-name" name="name" required maxlength="120" autocomplete="name">
+            </div>
+            <div>
+              <label for="c-phone">Phone</label>
+              <input id="c-phone" name="phone" type="tel" maxlength="40" autocomplete="tel">
+            </div>
+            <div>
+              <label for="c-email">Email</label>
+              <input id="c-email" name="email" type="email" maxlength="120" autocomplete="email">
+            </div>
+            <div>
+              <label for="c-system">System type <span class="req">*</span></label>
+              <select id="c-system" name="systemType" required>
+                <option value="" selected disabled>Select</option>
+                <option value="tank">Tank</option>
+                <option value="aerobic">Aerobic</option>
+                <option value="sewer">Sewer line</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="full">
+              <label for="c-address">Service address <span class="req">*</span></label>
+              <input id="c-address" name="address" required maxlength="200" autocomplete="street-address">
+            </div>
+            <div class="form-actions full">
+              <button class="btn btn-primary" type="submit">Add customer</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <h2 id="customer-heading">Customers</h2>
+          <input id="customer-search" type="search" placeholder="Search customers" aria-label="Search customers">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Service address</th>
+                <th>System</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="customer-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-dispatch" class="view">
+    <div class="stack">
+      <div class="card">
+        <h2>Schedule a job</h2>
+        <form id="job-form">
+          <div class="form-grid">
+            <div>
+              <label for="j-customer">Customer <span class="req">*</span></label>
+              <input id="j-customer" name="customer" list="customer-names" required maxlength="120" autocomplete="off" placeholder="Pick a saved customer or type a name">
+              <p class="hint">Pick a saved customer or type a name.</p>
+            </div>
+            <div>
+              <label for="j-date">Date <span class="req">*</span></label>
+              <input id="j-date" name="date" type="date" required>
+            </div>
+            <div class="full">
+              <label for="j-address">Address <span class="req">*</span></label>
+              <input id="j-address" name="address" required maxlength="200">
+            </div>
+            <div>
+              <label for="j-service">Service <span class="req">*</span></label>
+              <input id="j-service" name="service" required maxlength="160" placeholder="Pump out, inspection, repair">
+            </div>
+            <div>
+              <label for="j-tech">Technician <span class="req">*</span></label>
+              <input id="j-tech" name="technician" required maxlength="80">
+            </div>
+            <div class="form-actions full">
+              <button class="btn btn-primary" type="submit">Schedule job</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <h2 id="job-heading">Jobs</h2>
+          <select id="job-filter" aria-label="Filter jobs">
+            <option value="all">All jobs</option>
+            <option value="open">Open</option>
+            <option value="complete">Completed</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Address</th>
+                <th>Service</th>
+                <th>Technician</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="job-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-estimates" class="view">
+    <div class="stack">
+      <div class="card">
+        <h2>Create an estimate</h2>
+        <form id="estimate-form">
+          <div class="form-grid">
+            <div>
+              <label for="e-customer">Customer <span class="req">*</span></label>
+              <input id="e-customer" name="customer" list="customer-names" required maxlength="120" autocomplete="off" placeholder="Pick a saved customer or type a name">
+              <p class="hint">Pick a saved customer or type a name.</p>
+            </div>
+            <div>
+              <label for="e-status">Status <span class="req">*</span></label>
+              <select id="e-status" name="status" required>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="accepted">Accepted</option>
+              </select>
+            </div>
+            <div class="full">
+              <label for="e-address">Address <span class="req">*</span></label>
+              <input id="e-address" name="address" required maxlength="200">
+            </div>
+            <div class="full">
+              <label for="e-scope">Scope of work <span class="req">*</span></label>
+              <textarea id="e-scope" name="scope" required maxlength="2000"></textarea>
+            </div>
+            <div>
+              <label for="e-amount">Amount <span class="req">*</span></label>
+              <input id="e-amount" name="amount" type="number" min="0" step="0.01" required inputmode="decimal">
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Save estimate</button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2 id="estimate-heading">Estimates</h2>
+        <p class="pipeline" id="pipeline-total">Pipeline total of non-accepted estimates: $0.00 <span>Draft and sent. Accepted estimates are not included.</span></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Address</th>
+                <th>Scope of work</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="estimate-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <div class="card">
+      <h2>Settings</h2>
+      <p class="hint" style="margin-bottom:14px">Saved in this browser only. These company details are already filled in and can be edited.</p>
+      <form id="settings-form">
+        <div class="form-grid">
+          <div>
+            <label for="s-company">Company name <span class="req">*</span></label>
+            <input id="s-company" name="companyName" required maxlength="120">
+          </div>
+          <div>
+            <label for="s-phone">Phone</label>
+            <input id="s-phone" name="phone" type="tel" maxlength="40">
+          </div>
+          <div>
+            <label for="s-email">Email</label>
+            <input id="s-email" name="email" type="email" maxlength="120">
+          </div>
+          <div>
+            <label for="s-website">Website</label>
+            <input id="s-website" name="website" type="url" maxlength="200">
+          </div>
+          <div class="full">
+            <label for="s-area">Service area</label>
+            <input id="s-area" name="serviceArea" maxlength="160">
+          </div>
+          <div class="form-actions full">
+            <button class="btn btn-primary" type="submit">Save settings</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <p class="footnote">Customer, job, and estimate data stays in this browser. Nothing is uploaded.</p>
+</main>
+<datalist id="customer-names"></datalist>
+<script>
+(function () {
+  var STORAGE_KEY = "septic-hero-v1";
+  var DEFAULT_SETTINGS = {
+    companyName: "Southern Septic LLC",
+    phone: "(404) 528-4631",
+    email: "southernseptic53@gmail.com",
+    website: "https://www.southernsepticcompany.com/",
+    serviceArea: "Cumming and North Georgia"
+  };
+  var SYSTEM_LABELS = {
+    tank: "Tank",
+    aerobic: "Aerobic",
+    sewer: "Sewer line",
+    other: "Other"
+  };
+  var ESTIMATE_STATUSES = { draft: "Draft", sent: "Sent", accepted: "Accepted" };
+  var state = load();
+  var customerQuery = "";
+  var jobFilter = "all";
+  var flashTimer = 0;
+
+  function load() {
+    var empty = {
+      settings: Object.assign({}, DEFAULT_SETTINGS),
+      customers: [],
+      jobs: [],
+      estimates: []
+    };
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return empty;
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== "object") return empty;
+      return {
+        settings: cleanSettings(data.settings),
+        customers: cleanCustomers(data.customers),
+        jobs: cleanJobs(data.jobs),
+        estimates: cleanEstimates(data.estimates)
+      };
+    } catch (err) {
+      return empty;
+    }
+  }
+
+  function cleanSettings(input) {
+    var settings = Object.assign({}, DEFAULT_SETTINGS);
+    if (!input || typeof input !== "object") return settings;
+    Object.keys(DEFAULT_SETTINGS).forEach(function (key) {
+      if (typeof input[key] === "string") settings[key] = input[key];
+    });
+    return settings;
+  }
+
+  function cleanCustomers(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (c) { return c && c.id && c.name; }).map(function (c) {
+      return {
+        id: String(c.id),
+        name: String(c.name).trim(),
+        phone: String(c.phone || "").trim(),
+        email: String(c.email || "").trim(),
+        address: String(c.address || "").trim(),
+        systemType: SYSTEM_LABELS[c.systemType] ? c.systemType : "other",
+        createdAt: String(c.createdAt || "")
+      };
+    });
+  }
+
+  function cleanJobs(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (j) { return j && j.id && j.customerName; }).map(function (j) {
+      return {
+        id: String(j.id),
+        customerId: j.customerId ? String(j.customerId) : "",
+        customerName: String(j.customerName).trim(),
+        address: String(j.address || "").trim(),
+        service: String(j.service || "").trim(),
+        date: String(j.date || ""),
+        technician: String(j.technician || "").trim(),
+        status: j.status === "complete" ? "complete" : "open",
+        createdAt: String(j.createdAt || "")
+      };
+    });
+  }
+
+  function cleanEstimates(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (e) { return e && e.id && e.customerName; }).map(function (e) {
+      var amount = Number(e.amount);
+      return {
+        id: String(e.id),
+        customerId: e.customerId ? String(e.customerId) : "",
+        customerName: String(e.customerName).trim(),
+        address: String(e.address || "").trim(),
+        scope: String(e.scope || "").trim(),
+        amount: isFinite(amount) && amount >= 0 ? Math.round(amount * 100) / 100 : 0,
+        status: ESTIMATE_STATUSES[e.status] ? e.status : "draft",
+        createdAt: String(e.createdAt || "")
+      };
+    });
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (err) {
+      flash("Could not save in this browser. Changes will last only until you close the page.");
+      return false;
+    }
+  }
+
+  function uid() {
+    if (window.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch];
+    });
+  }
+
+  function money(n) {
+    return (Number(n) || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+  }
+
+  function formatDate(iso) {
+    var parts = String(iso || "").split("-");
+    if (parts.length !== 3 || parts[0].length !== 4) return iso || "";
+    return parts[1] + "/" + parts[2] + "/" + parts[0];
+  }
+
+  function safeUrl(url) {
+    try {
+      var parsed = new URL(url);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.href;
+    } catch (err) {}
+    return "";
+  }
+
+  function flash(message) {
+    var el = document.getElementById("flash");
+    el.textContent = message;
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { el.textContent = ""; }, 3500);
+  }
+
+  function openJobs() {
+    return state.jobs.filter(function (j) { return j.status !== "complete"; });
+  }
+
+  function openEstimates() {
+    return state.estimates.filter(function (e) { return e.status !== "accepted"; });
+  }
+
+  function pipelineTotal() {
+    return openEstimates().reduce(function (sum, e) { return sum + e.amount; }, 0);
+  }
+
+  function matchCustomer(name) {
+    var trimmed = name.trim();
+    var matches = state.customers.filter(function (c) { return c.name === trimmed; });
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function showView(name) {
+    document.querySelectorAll(".view").forEach(function (section) {
+      section.classList.toggle("active", section.id === "view-" + name);
+    });
+    document.querySelectorAll("nav button").forEach(function (button) {
+      if (button.getAttribute("data-view") === name) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    document.getElementById("flash").textContent = "";
+  }
+
+  function renderHeader() {
+    document.getElementById("header-company").textContent = state.settings.companyName || DEFAULT_SETTINGS.companyName;
+  }
+
+  function renderCompanySnapshot() {
+    var s = state.settings;
+    var site = safeUrl(s.website);
+    var website = site
+      ? '<a href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">' + esc(s.website) + "</a>"
+      : esc(s.website);
+    var email = s.email
+      ? '<a href="mailto:' + esc(s.email) + '">' + esc(s.email) + "</a>"
+      : "";
+    var phone = s.phone
+      ? '<a href="tel:' + esc(String(s.phone).replace(/[^\d+]/g, "")) + '">' + esc(s.phone) + "</a>"
+      : "";
+    document.getElementById("company-snapshot").innerHTML =
+      "<dt>Company</dt><dd>" + esc(s.companyName) + "</dd>" +
+      "<dt>Phone</dt><dd>" + phone + "</dd>" +
+      "<dt>Email</dt><dd>" + email + "</dd>" +
+      "<dt>Website</dt><dd>" + website + "</dd>" +
+      "<dt>Service area</dt><dd>" + esc(s.serviceArea) + "</dd>";
+  }
+
+  function renderDashboard() {
+    var open = openEstimates();
+    document.getElementById("stat-customers").textContent = String(state.customers.length);
+    document.getElementById("stat-jobs").textContent = String(openJobs().length);
+    document.getElementById("stat-estimates").textContent = String(open.length);
+    document.getElementById("stat-estimates-sum").textContent = money(pipelineTotal()) + " total";
+    renderCompanySnapshot();
+  }
+
+  function renderDatalist() {
+    document.getElementById("customer-names").innerHTML = state.customers.map(function (c) {
+      var label = c.address ? ' label="' + esc(c.address) + '"' : "";
+      return '<option value="' + esc(c.name) + '"' + label + "></option>";
+    }).join("");
+  }
+
+  function renderCustomers() {
+    var q = customerQuery.trim().toLowerCase();
+    var rows = state.customers.filter(function (c) {
+      if (!q) return true;
+      return (c.name + " " + c.phone + " " + c.email + " " + c.address + " " + SYSTEM_LABELS[c.systemType]).toLowerCase().indexOf(q) !== -1;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    document.getElementById("customer-heading").textContent = "Customers (" + state.customers.length + ")";
+    var body = document.getElementById("customer-rows");
+    if (!rows.length) {
+      body.innerHTML = '<tr><td class="empty" colspan="6">' + (state.customers.length ? "No customers match that search." : "No customers yet.") + "</td></tr>";
+      return;
+    }
+    body.innerHTML = rows.map(function (c) {
+      var phone = c.phone ? '<a href="tel:' + esc(c.phone.replace(/[^\d+]/g, "")) + '">' + esc(c.phone) + "</a>" : "";
+      var email = c.email ? '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + "</a>" : "";
+      return "<tr>" +
+        "<td>" + esc(c.name) + "</td>" +
+        "<td>" + phone + "</td>" +
+        "<td>" + email + "</td>" +
+        "<td>" + esc(c.address) + "</td>" +
+        "<td>" + esc(SYSTEM_LABELS[c.systemType] || c.systemType) + "</td>" +
+        '<td class="actions"><button type="button" class="btn btn-danger btn-small" data-action="delete-customer" data-id="' + esc(c.id) + '">Delete</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function renderJobs() {
+    var rows = state.jobs.filter(function (j) {
+      if (jobFilter === "open") return j.status !== "complete";
+      if (jobFilter === "complete") return j.status === "complete";
+      return true;
+    }).sort(function (a, b) {
+      var ao = a.status === "complete" ? 1 : 0;
+      var bo = b.status === "complete" ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      if (ao === 0) return String(a.date).localeCompare(String(b.date));
+      return String(b.date).localeCompare(String(a.date));
+    });
+    document.getElementById("job-heading").textContent = "Jobs (" + openJobs().length + " open)";
+    var body = document.getElementById("job-rows");
+    if (!rows.length) {
+      body.innerHTML = '<tr><td class="empty" colspan="7">' + (state.jobs.length ? "No jobs in this view." : "No jobs yet.") + "</td></tr>";
+      return;
+    }
+    body.innerHTML = rows.map(function (j) {
+      var done = j.status === "complete";
+      var status = done
+        ? '<span class="badge badge-done">Completed</span>'
+        : '<span class="badge badge-open">Open</span>';
+      var completeBtn = done
+        ? ""
+        : '<button type="button" class="btn btn-ok btn-small" data-action="complete-job" data-id="' + esc(j.id) + '">Mark complete</button>';
+      return '<tr class="' + (done ? "done" : "") + '">' +
+        "<td>" + esc(formatDate(j.date)) + "</td>" +
+        "<td>" + esc(j.customerName) + "</td>" +
+        "<td>" + esc(j.address) + "</td>" +
+        "<td>" + esc(j.service) + "</td>" +
+        "<td>" + esc(j.technician) + "</td>" +
+        "<td>" + status + "</td>" +
+        '<td class="actions">' + completeBtn +
+          '<button type="button" class="btn btn-danger btn-small" data-action="delete-job" data-id="' + esc(j.id) + '">Delete</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function renderEstimates() {
+    var rows = state.estimates.slice().sort(function (a, b) {
+      var ao = a.status === "accepted" ? 1 : 0;
+      var bo = b.status === "accepted" ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      return String(b.createdAt).localeCompare(String(a.createdAt));
+    });
+    document.getElementById("estimate-heading").textContent = "Estimates (" + state.estimates.length + ")";
+    document.getElementById("pipeline-total").innerHTML =
+      "Pipeline total of non-accepted estimates: " + money(pipelineTotal()) +
+      ' <span>Draft and sent. Accepted estimates are not included.</span>';
+    var body = document.getElementById("estimate-rows");
+    if (!rows.length) {
+      body.innerHTML = '<tr><td class="empty" colspan="6">No estimates yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(function (e) {
+      var options = Object.keys(ESTIMATE_STATUSES).map(function (key) {
+        return '<option value="' + key + '"' + (e.status === key ? " selected" : "") + ">" + ESTIMATE_STATUSES[key] + "</option>";
+      }).join("");
+      return "<tr>" +
+        "<td>" + esc(e.customerName) + "</td>" +
+        "<td>" + esc(e.address) + "</td>" +
+        "<td>" + esc(e.scope) + "</td>" +
+        "<td>" + money(e.amount) + "</td>" +
+        '<td><select class="status-select" aria-label="Status for ' + esc(e.customerName) + '" data-action="estimate-status" data-id="' + esc(e.id) + '">' + options + "</select></td>" +
+        '<td class="actions"><button type="button" class="btn btn-danger btn-small" data-action="delete-estimate" data-id="' + esc(e.id) + '">Delete</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function fillSettingsForm() {
+    var s = state.settings;
+    document.getElementById("s-company").value = s.companyName;
+    document.getElementById("s-phone").value = s.phone;
+    document.getElementById("s-email").value = s.email;
+    document.getElementById("s-website").value = s.website;
+    document.getElementById("s-area").value = s.serviceArea;
+  }
+
+  function renderAll() {
+    renderHeader();
+    renderDashboard();
+    renderDatalist();
+    renderCustomers();
+    renderJobs();
+    renderEstimates();
+  }
+
+  function wireCustomerLookup(inputId, addressId) {
+    var input = document.getElementById(inputId);
+    var address = document.getElementById(addressId);
+    input.addEventListener("input", function () {
+      var match = matchCustomer(input.value);
+      input.dataset.customerId = match ? match.id : "";
+      if (match && match.address) address.value = match.address;
+    });
+  }
+
+  document.querySelectorAll("nav button").forEach(function (button) {
+    button.addEventListener("click", function () {
+      showView(button.getAttribute("data-view"));
+    });
+  });
+
+  document.getElementById("customer-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    state.customers.push({
+      id: uid(),
+      name: form.name.value.trim(),
+      phone: form.phone.value.trim(),
+      email: form.email.value.trim(),
+      address: form.address.value.trim(),
+      systemType: form.systemType.value,
+      createdAt: new Date().toISOString()
+    });
+    if (!save()) return;
+    form.reset();
+    renderAll();
+    flash("Customer added.");
+  });
+
+  document.getElementById("customer-search").addEventListener("input", function (event) {
+    customerQuery = event.target.value;
+    renderCustomers();
+  });
+
+  document.getElementById("job-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var name = form.customer.value.trim();
+    var match = matchCustomer(name);
+    state.jobs.push({
+      id: uid(),
+      customerId: match ? match.id : "",
+      customerName: name,
+      address: form.address.value.trim(),
+      service: form.service.value.trim(),
+      date: form.date.value,
+      technician: form.technician.value.trim(),
+      status: "open",
+      createdAt: new Date().toISOString()
+    });
+    if (!save()) return;
+    form.reset();
+    document.getElementById("j-customer").dataset.customerId = "";
+    renderAll();
+    flash("Job scheduled.");
+  });
+
+  document.getElementById("job-filter").addEventListener("change", function (event) {
+    jobFilter = event.target.value;
+    renderJobs();
+  });
+
+  document.getElementById("estimate-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    var amount = Number(form.amount.value);
+    if (!isFinite(amount) || amount < 0) {
+      flash("Enter an amount of zero or more.");
+      return;
+    }
+    var name = form.customer.value.trim();
+    var match = matchCustomer(name);
+    state.estimates.push({
+      id: uid(),
+      customerId: match ? match.id : "",
+      customerName: name,
+      address: form.address.value.trim(),
+      scope: form.scope.value.trim(),
+      amount: Math.round(amount * 100) / 100,
+      status: form.status.value,
+      createdAt: new Date().toISOString()
+    });
+    if (!save()) return;
+    form.reset();
+    document.getElementById("e-status").value = "draft";
+    renderAll();
+    flash("Estimate saved.");
+  });
+
+  document.getElementById("settings-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var form = event.target;
+    state.settings = {
+      companyName: form.companyName.value.trim(),
+      phone: form.phone.value.trim(),
+      email: form.email.value.trim(),
+      website: form.website.value.trim(),
+      serviceArea: form.serviceArea.value.trim()
+    };
+    if (!save()) return;
+    renderHeader();
+    renderCompanySnapshot();
+    flash("Settings saved.");
+  });
+
+  document.body.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-action]");
+    if (!button) return;
+    var action = button.getAttribute("data-action");
+    var id = button.getAttribute("data-id");
+    if (action === "delete-customer") {
+      var customer = state.customers.find(function (c) { return c.id === id; });
+      if (!customer || !confirm("Delete " + customer.name + "? Jobs and estimates already saved will stay.")) return;
+      state.customers = state.customers.filter(function (c) { return c.id !== id; });
+      if (!save()) return;
+      renderAll();
+      flash("Customer deleted.");
+    } else if (action === "delete-job") {
+      if (!confirm("Delete this job?")) return;
+      state.jobs = state.jobs.filter(function (j) { return j.id !== id; });
+      if (!save()) return;
+      renderAll();
+      flash("Job deleted.");
+    } else if (action === "complete-job") {
+      var job = state.jobs.find(function (j) { return j.id === id; });
+      if (!job) return;
+      job.status = "complete";
+      if (!save()) return;
+      renderAll();
+      flash("Job marked complete.");
+    } else if (action === "delete-estimate") {
+      if (!confirm("Delete this estimate?")) return;
+      state.estimates = state.estimates.filter(function (e) { return e.id !== id; });
+      if (!save()) return;
+      renderAll();
+      flash("Estimate deleted.");
+    }
+  });
+
+  document.body.addEventListener("change", function (event) {
+    var select = event.target.closest("[data-action='estimate-status']");
+    if (!select) return;
+    var estimate = state.estimates.find(function (e) { return e.id === select.getAttribute("data-id"); });
+    if (!estimate || !ESTIMATE_STATUSES[select.value]) return;
+    estimate.status = select.value;
+    if (!save()) return;
+    renderDashboard();
+    renderEstimates();
+    flash("Estimate updated.");
+  });
+
+  wireCustomerLookup("j-customer", "j-address");
+  wireCustomerLookup("e-customer", "e-address");
+  fillSettingsForm();
+  renderAll();
+})();
+</script>
+</body>
+</html>
